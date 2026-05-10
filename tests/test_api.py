@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.agents import llm
 from app.main import app
 
 
@@ -34,3 +35,42 @@ def test_demo_data_and_sample_questions() -> None:
     payload = loaded.json()
     assert payload["total_documents"] >= 10
     assert payload["sample_questions"]
+
+
+def test_invalid_openai_key_falls_back(monkeypatch) -> None:
+    class FailingCompletions:
+        async def create(self, *args, **kwargs):
+            from openai import AuthenticationError
+            import httpx
+
+            request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+            response = httpx.Response(401, request=request, json={"error": {"message": "bad key"}})
+            raise AuthenticationError("bad key", response=response, body=response.json())
+
+    class FailingChat:
+        completions = FailingCompletions()
+
+    class FailingClient:
+        chat = FailingChat()
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class FakeSettings:
+        openai_api_key = "bad-key"
+        openai_model = "gpt-4o-mini"
+
+    monkeypatch.setattr(llm, "AsyncOpenAI", FailingClient)
+    monkeypatch.setattr(llm, "get_settings", lambda: FakeSettings())
+
+    client = TestClient(app)
+    client.post(
+        "/api/documents",
+        json={
+            "title": "Fallback Notes",
+            "content": "Invalid OpenAI keys should fall back to deterministic cited answers.",
+        },
+    )
+    asked = client.post("/api/ask", json={"question": "What should invalid OpenAI keys do?", "top_k": 4})
+    assert asked.status_code == 200
+    assert asked.json()["citations"]

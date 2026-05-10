@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from openai import AsyncOpenAI
+import logging
+
+from openai import APIError, AuthenticationError, AsyncOpenAI, OpenAIError
 
 from app.config import get_settings
 
+
+logger = logging.getLogger("mak.llm")
 
 SYSTEM_PROMPT = """You are the Summarizer agent in a knowledge-management RAG system.
 Answer only from the supplied context. Use compact citations in square brackets, e.g. [D1-C3].
@@ -21,15 +25,21 @@ async def generate_answer(question: str, context_blocks: list[str]) -> str:
 
     client = AsyncOpenAI(api_key=settings.openai_api_key)
     context = "\n\n".join(context_blocks)
-    response = await client.chat.completions.create(
-        model=settings.openai_model,
-        temperature=0.2,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Question:\n{question}\n\nContext:\n{context}"},
-        ],
-    )
-    return response.choices[0].message.content or "I could not produce an answer from the supplied context."
+    try:
+        response = await client.chat.completions.create(
+            model=settings.openai_model,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Question:\n{question}\n\nContext:\n{context}"},
+            ],
+        )
+        return response.choices[0].message.content or "I could not produce an answer from the supplied context."
+    except AuthenticationError:
+        logger.warning("OpenAI authentication failed. Falling back to deterministic extractive answer.")
+    except (APIError, OpenAIError) as exc:
+        logger.warning("OpenAI answer generation failed: %s. Falling back to deterministic extractive answer.", exc)
+    return extractive_answer(question, context_blocks)
 
 
 def extractive_answer(question: str, context_blocks: list[str]) -> str:
