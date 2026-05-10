@@ -1,8 +1,22 @@
 from __future__ import annotations
 
+import logging
+
 from app.agents.guardrails import split_claims
 from app.config import get_settings
 from app.models import ClaimCheck, JudgeReport
+
+
+logger = logging.getLogger("mak.evaluation")
+
+
+def safe_judge_error(exc: Exception) -> str:
+    text = str(exc).lower()
+    if "401" in text or "authentication" in text or "api key" in text or "invalid_api_key" in text:
+        return "llm_judge_auth_unavailable"
+    if "rate" in text or "429" in text:
+        return "llm_judge_rate_limited"
+    return "llm_judge_unavailable"
 
 
 def citation_ids_from_answer(answer: str, available_ids: set[str]) -> set[str]:
@@ -72,9 +86,16 @@ async def judge_answer(question: str, answer: str, context_by_id: dict[str, str]
             details={"mode": "autogen", "judge_response": content, "unsupported_claims": len(unsupported)},
         )
     except Exception as exc:
+        reason = safe_judge_error(exc)
+        logger.warning("AutoGen judge failed with %s; using heuristic fallback.", reason)
         verdict = "pass" if base_score >= 0.75 else "review"
         return JudgeReport(
             score=round(base_score, 2),
             verdict=verdict,
-            details={"mode": "heuristic_fallback", "error": str(exc), "unsupported_claims": len(unsupported)},
+            details={
+                "mode": "heuristic_fallback",
+                "reason": reason,
+                "note": "LLM judge unavailable; deterministic claim checks were used instead.",
+                "unsupported_claims": len(unsupported),
+            },
         )
