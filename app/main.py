@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import logging
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents.workflow import build_workflow
@@ -17,6 +18,7 @@ from app.storage import KnowledgeStore
 settings = get_settings()
 store = KnowledgeStore(settings.database_path)
 workflow = build_workflow(store)
+logger = logging.getLogger("mak")
 
 app = FastAPI(title=settings.app_name, version="1.0.0")
 app.add_middleware(
@@ -29,6 +31,16 @@ app.add_middleware(
 
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unhandled error for %s %s", request.method, request.url.path)
+    if settings.app_env == "development":
+        detail = str(exc)
+    else:
+        detail = "Unexpected server error. Check container logs with: docker logs mak"
+    return JSONResponse(status_code=500, content={"detail": detail})
 
 
 @app.get("/")

@@ -113,7 +113,7 @@ The goal is that a user can always answer: "Where did this answer come from, and
 
 ### Theme Support
 
-The **Dark theme** toggle switches the full interface between light and dark modes. The preference is stored in the browser with `localStorage`, so the app remembers the user's choice after refresh.
+The app defaults to **dark mode**. The **Light theme** toggle switches the full interface into light mode. The preference is stored in the browser with `localStorage`, so the app remembers the user's choice after refresh.
 
 ---
 
@@ -262,6 +262,15 @@ cp .env.example .env
 docker compose -f docker-compose.prod.yml up -d
 ```
 
+If you already deployed an older container:
+
+```bash
+docker rm -f mak
+docker pull vedantpol/multi-agent-knowledge-manager:latest
+docker run -d --name mak --restart unless-stopped -p 8723:8000 -v mak_data:/data vedantpol/multi-agent-knowledge-manager:latest
+docker logs -f mak
+```
+
 ---
 
 ## API Guide
@@ -378,6 +387,21 @@ Server requirements:
 - inbound access to port `8723`, or a reverse proxy to the container
 
 For production, put Nginx or Caddy in front of the app for TLS and domain routing.
+
+### Troubleshooting 500 Errors
+
+Check the service and logs:
+
+```bash
+curl http://localhost:8723/health
+docker logs --tail 100 mak
+```
+
+If you use Compose:
+
+```bash
+docker compose -f docker-compose.prod.yml logs --tail 100
+```
 
 ---
 

@@ -1,4 +1,20 @@
 :root {
+  color-scheme: dark;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --line: #334155;
+  --panel: #111827;
+  --wash: #020617;
+  --accent: #60a5fa;
+  --accent-2: #c084fc;
+  --danger: #f87171;
+  --ok: #34d399;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --toast-bg: #0f172a;
+  --toast-text: #f8fafc;
+}
+
+[data-theme="light"] {
   color-scheme: light;
   --ink: #101828;
   --muted: #667085;
@@ -10,6 +26,8 @@
   --danger: #b42318;
   --ok: #047857;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --toast-bg: #101828;
+  --toast-text: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -24,6 +42,8 @@
   --danger: #f87171;
   --ok: #34d399;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --toast-bg: #0f172a;
+  --toast-text: #f8fafc;
 }
 
 * {
@@ -274,7 +294,7 @@ textarea:focus {
   min-height: 112px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--panel);
   padding: 14px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
@@ -516,7 +536,7 @@ pre {
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--panel);
   cursor: pointer;
 }
 
@@ -560,8 +580,8 @@ pre {
   bottom: 18px;
   max-width: 360px;
   border-radius: 8px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--toast-text);
   opacity: 0;
   transform: translateY(8px);
   transition: 0.2s ease;

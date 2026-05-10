@@ -363,7 +363,7 @@ $("#theme-toggle").addEventListener("click", () => {
   applyTheme(current === "dark" ? "light" : "dark");
 });
 
-applyTheme(localStorage.getItem("mak-theme") || "light");
+applyTheme(localStorage.getItem("mak-theme") || "dark");
 loadHealth();
 loadSampleQuestions().catch((error) => toast(error.message));
 loadDocuments().catch((error) => {
