@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multi-Agent Knowledge Management</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="mark">MAK</span>
+          <div>
+            <h1>MAK Copilot</h1>
+            <p>Enterprise agentic RAG</p>
+          </div>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="primary" type="button" id="load-demo">Load demo data</button>
+          <button type="button" id="theme-toggle">Dark theme</button>
+        </div>
+
+        <div class="panel compact">
+          <h2>Demo Setup</h2>
+          <p class="helper">Load a ready-made enterprise knowledge base with policies, runbooks, audit rules, and sample banking operations notes.</p>
+          <div class="action-progress" id="demo-progress">
+            <div class="progress-copy">
+              <span id="demo-status">Demo data ready to load</span>
+              <span id="demo-percent">0%</span>
+            </div>
+            <div class="progress-track"><div id="demo-bar"></div></div>
+          </div>
+        </div>
+
+        <form id="doc-form" class="panel">
+          <div class="panel-head">
+            <h2>Add Source</h2>
+            <button class="icon-btn" type="button" id="refresh-docs" title="Refresh sources">R</button>
+          </div>
+          <p class="helper">Paste trusted knowledge here. The app chunks it, indexes it, and makes it available for cited answers.</p>
+          <label>
+            <span>Title</span>
+            <input id="doc-title" name="title" autocomplete="off" required />
+          </label>
+          <label>
+            <span>Source URL</span>
+            <input id="doc-url" name="source_url" type="url" autocomplete="off" />
+          </label>
+          <label>
+            <span>Content</span>
+            <textarea id="doc-content" name="content" required></textarea>
+          </label>
+          <button class="primary" type="submit">Add document</button>
+          <div class="action-progress" id="index-progress">
+            <div class="progress-copy">
+              <span id="index-status">Ready to index</span>
+              <span id="index-percent">0%</span>
+            </div>
+            <div class="progress-track"><div id="index-bar"></div></div>
+          </div>
+        </form>
+
+        <form id="upload-form" class="panel compact">
+          <label class="file-row">
+            <span>Upload .txt</span>
+            <input id="file-input" type="file" accept=".txt,text/plain" />
+          </label>
+          <button type="submit">Upload</button>
+          <div class="action-progress" id="upload-progress">
+            <div class="progress-copy">
+              <span id="upload-status">Ready to upload</span>
+              <span id="upload-percent">0%</span>
+            </div>
+            <div class="progress-track"><div id="upload-bar"></div></div>
+          </div>
+        </form>
+
+        <section class="panel source-list">
+          <h2>Sources</h2>
+          <p class="helper">These are the documents the retriever can cite.</p>
+          <div class="action-progress" id="source-progress">
+            <div class="progress-copy">
+              <span id="source-status">Source list ready</span>
+              <span id="source-percent">0%</span>
+            </div>
+            <div class="progress-track"><div id="source-bar"></div></div>
+          </div>
+          <div id="documents"></div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <h2>Multi-Agent Knowledge Management System</h2>
+            <p>Citation-backed answers with LangGraph agents, guardrails, unsupported-claim checks, and AutoGen judge evaluation.</p>
+          </div>
+          <div class="status" id="health">Checking</div>
+        </header>
+
+        <section class="guide">
+          <article class="guide-card active" id="guide-source">
+            <span>1</span>
+            <div>
+              <h3>Add knowledge</h3>
+              <p>Paste text or upload a file. Each source becomes searchable evidence.</p>
+            </div>
+          </article>
+          <article class="guide-card" id="guide-ask">
+            <span>2</span>
+            <div>
+              <h3>Ask a question</h3>
+              <p>The agent graph retrieves context, drafts an answer, and keeps citations attached.</p>
+            </div>
+          </article>
+          <article class="guide-card" id="guide-verify">
+            <span>3</span>
+            <div>
+              <h3>Verify output</h3>
+              <p>Check citations, unsupported claims, hallucination risk, and the execution trace.</p>
+            </div>
+          </article>
+        </section>
+
+        <form id="ask-form" class="ask-box">
+          <div class="section-head">
+            <h3>Ask the Knowledge Base</h3>
+            <span class="pill">guided run</span>
+          </div>
+          <div class="sample-questions">
+            <div class="section-head">
+              <h3>Sample Questions</h3>
+              <button type="button" id="refresh-questions">Refresh</button>
+            </div>
+            <div id="sample-questions"></div>
+          </div>
+          <textarea id="question" placeholder="Ask from the indexed knowledge base" required></textarea>
+          <div class="ask-actions">
+            <label>
+              <span>Top K</span>
+              <input id="top-k" type="number" min="1" max="12" value="6" />
+            </label>
+            <button class="primary" type="submit">Run agents</button>
+          </div>
+          <div class="action-progress prominent" id="ask-progress">
+            <div class="progress-copy">
+              <span id="ask-status">Waiting for a question</span>
+              <span id="ask-percent">0%</span>
+            </div>
+            <div class="progress-track"><div id="ask-bar"></div></div>
+          </div>
+          <div class="agent-steps" id="agent-steps">
+            <div data-step="guardrail">Guardrail</div>
+            <div data-step="planner">Planner</div>
+            <div data-step="retriever">Retriever</div>
+            <div data-step="summarizer">Summarizer</div>
+            <div data-step="critic">Critic</div>
+            <div data-step="judge">Judge</div>
+          </div>
+        </form>
+
+        <section class="result-grid">
+          <article class="answer">
+            <div class="section-head">
+              <h3>Answer</h3>
+              <span id="risk" class="pill">risk: n/a</span>
+            </div>
+            <div id="answer">Index a source, then ask a question.</div>
+          </article>
+
+          <article>
+            <div class="section-head">
+              <h3>Judge</h3>
+              <span id="score" class="pill">score: n/a</span>
+            </div>
+            <pre id="judge">{}</pre>
+          </article>
+        </section>
+
+        <section class="tabs">
+          <input checked id="tab-citations" name="tabs" type="radio" />
+          <label for="tab-citations">Citations</label>
+          <input id="tab-claims" name="tabs" type="radio" />
+          <label for="tab-claims">Claims</label>
+          <input id="tab-trace" name="tabs" type="radio" />
+          <label for="tab-trace">Trace</label>
+
+          <div class="tab-panel citations" id="citations"></div>
+          <div class="tab-panel claims" id="claims"></div>
+          <div class="tab-panel trace" id="trace"></div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
