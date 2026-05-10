@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.agents.workflow import build_workflow
 from app.config import get_settings
 from app.demo_data import DEMO_DOCUMENTS, SAMPLE_QUESTIONS
+from app.memory import release_memory
 from app.models import AskRequest, AskResponse, DemoLoadResponse, DocumentCreate, DocumentOut
 from app.storage import KnowledgeStore
 
@@ -32,6 +33,21 @@ app.add_middleware(
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+MEMORY_CLEANUP_PATHS = {
+    "/api/ask",
+    "/api/demo/load",
+    "/api/documents",
+    "/api/documents/upload",
+}
+
+
+@app.middleware("http")
+async def cleanup_after_heavy_requests(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path in MEMORY_CLEANUP_PATHS or request.url.path.startswith("/api/documents/"):
+        release_memory(request.url.path)
+    return response
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -51,6 +67,11 @@ async def index() -> FileResponse:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "app": settings.app_name, "environment": settings.app_env}
+
+
+@app.post("/api/admin/memory/collect")
+async def collect_memory() -> dict:
+    return release_memory("admin")
 
 
 @app.get("/api/documents", response_model=list[DocumentOut])

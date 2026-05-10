@@ -37,6 +37,15 @@ def test_demo_data_and_sample_questions() -> None:
     assert payload["sample_questions"]
 
 
+def test_memory_collect_endpoint() -> None:
+    client = TestClient(app)
+
+    response = client.post("/api/admin/memory/collect")
+
+    assert response.status_code == 200
+    assert "collected" in response.json()
+
+
 def test_invalid_openai_key_falls_back(monkeypatch) -> None:
     class FailingCompletions:
         async def create(self, *args, **kwargs):

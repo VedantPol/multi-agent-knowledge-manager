@@ -403,6 +403,16 @@ If you use Compose:
 docker compose -f docker-compose.prod.yml logs --tail 100
 ```
 
+### Memory Cleanup
+
+The app closes LLM clients after each run, triggers garbage collection after heavy routes, and exposes a manual cleanup endpoint:
+
+```bash
+curl -X POST http://localhost:8723/api/admin/memory/collect
+```
+
+The production Compose file also caps the container at `768m`; with `restart: unless-stopped`, Docker will restart it if the process ever exceeds that limit.
+
 ---
 
 ## Resume Highlights

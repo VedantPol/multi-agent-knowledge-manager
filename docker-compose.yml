@@ -3,6 +3,10 @@ services:
     build: .
     container_name: mak
     restart: unless-stopped
+    mem_limit: 768m
+    memswap_limit: 768m
+    environment:
+      MALLOC_ARENA_MAX: "2"
     env_file:
       - path: .env
         required: false

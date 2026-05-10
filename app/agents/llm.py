@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 
 from openai import APIError, AuthenticationError, AsyncOpenAI, OpenAIError
 
@@ -39,6 +40,9 @@ async def generate_answer(question: str, context_blocks: list[str]) -> str:
         logger.warning("OpenAI authentication failed. Falling back to deterministic extractive answer.")
     except (APIError, OpenAIError) as exc:
         logger.warning("OpenAI answer generation failed: %s. Falling back to deterministic extractive answer.", exc)
+    finally:
+        with suppress(Exception):
+            await client.close()
     return extractive_answer(question, context_blocks)
 
 

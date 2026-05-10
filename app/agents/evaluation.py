@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 
 from app.agents.guardrails import split_claims
 from app.config import get_settings
@@ -63,6 +64,7 @@ async def judge_answer(question: str, answer: str, context_by_id: dict[str, str]
             details={"mode": "heuristic", "unsupported_claims": len(unsupported)},
         )
 
+    model_client = None
     try:
         from autogen_agentchat.agents import AssistantAgent
         from autogen_ext.models.openai import OpenAIChatCompletionClient
@@ -78,7 +80,6 @@ async def judge_answer(question: str, answer: str, context_by_id: dict[str, str]
         )
         context = "\n\n".join(f"[{key}] {value}" for key, value in context_by_id.items())
         result = await judge.run(task=f"Question: {question}\nAnswer: {answer}\nContext:\n{context}")
-        await model_client.close()
         content = getattr(result.messages[-1], "content", "")
         return JudgeReport(
             score=round(base_score, 2),
@@ -99,3 +100,7 @@ async def judge_answer(question: str, answer: str, context_by_id: dict[str, str]
                 "unsupported_claims": len(unsupported),
             },
         )
+    finally:
+        if model_client is not None:
+            with suppress(Exception):
+                await model_client.close()
