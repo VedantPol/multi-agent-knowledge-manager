@@ -6,7 +6,7 @@ param(
   [string]$User,
 
   [string]$RemotePath = "/opt/mak",
-  [string]$Port = "8000"
+  [string]$Port = "8723"
 )
 
 $ErrorActionPreference = "Stop"

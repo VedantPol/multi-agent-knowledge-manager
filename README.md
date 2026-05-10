@@ -44,7 +44,7 @@ docker compose up --build
 Open:
 
 ```text
-http://localhost:8000
+http://localhost:8723
 ```
 
 Try this flow:
@@ -227,7 +227,7 @@ docker compose up --build
 Then visit:
 
 ```text
-http://localhost:8000
+http://localhost:8723
 ```
 
 ### Local Development
@@ -243,8 +243,10 @@ uvicorn app.main:app --reload
 API docs:
 
 ```text
-http://localhost:8000/docs
+http://localhost:8723/docs
 ```
+
+When running with Docker Compose, the public host port is `8723` and the app still listens on `8000` inside the container.
 
 ---
 
@@ -359,7 +361,7 @@ Server requirements:
 
 - Docker Engine
 - Docker Compose plugin
-- inbound access to port `8000`, or a reverse proxy to the container
+- inbound access to port `8723`, or a reverse proxy to the container
 
 For production, put Nginx or Caddy in front of the app for TLS and domain routing.
 
