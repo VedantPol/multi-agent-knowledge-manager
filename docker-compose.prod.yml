@@ -1,0 +1,15 @@
+services:
+  mak:
+    image: vedantpol/multi-agent-knowledge-manager:latest
+    container_name: mak
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8723:8000"
+    volumes:
+      - mak_data:/data
+
+volumes:
+  mak_data:

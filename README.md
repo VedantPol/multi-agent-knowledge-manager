@@ -248,6 +248,20 @@ http://localhost:8723/docs
 
 When running with Docker Compose, the public host port is `8723` and the app still listens on `8000` inside the container.
 
+### Pull Published Docker Image
+
+```bash
+docker pull vedantpol/multi-agent-knowledge-manager:latest
+docker run -d --name mak --restart unless-stopped -p 8723:8000 -v mak_data:/data vedantpol/multi-agent-knowledge-manager:latest
+```
+
+Or with the production Compose file:
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.prod.yml up -d
+```
+
 ---
 
 ## API Guide
